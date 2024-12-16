@@ -179,7 +179,11 @@ async fn handle_socket(socket: WebSocket, Query(query): Query<WebsocketQueries>,
                         
                         return;
                     },
-                    Message::Ping(ping) => println!("ping: {:#?}", ping),
+                    Message::Ping(ping) => {
+                        let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(query.room.clone()).pong(ping).await;
+                    },
                     Message::Pong(pong) => {
                         let mut broadcaster = broadcaster.write().await;
 

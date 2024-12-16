@@ -138,6 +138,38 @@ pub mod typed {
                 } 
             } 
         }
+
+        /// broadcast the pong message directly:
+        pub async fn pong(&mut self, message: Vec<u8>) where T: Clone {
+            for connection in &mut self.connections { 
+                let msg = Message::Pong(message.clone());
+                let receiver = &mut connection.receiver; 
+                                
+                let _ = receiver.send(msg).await;
+            }
+        }
+        
+        /// broadcast the pong message if the given condition in it's closure is true.
+        pub async fn pong_if<F>(&mut self, message: Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+            for connection in &mut self.connections { 
+                if condition(connection) { 
+                    let msg = Message::Pong(message.clone()); 
+                    let receiver = &mut connection.receiver; 
+                    let _ = receiver.send(msg).await;
+                } 
+            } 
+        }
+                
+        /// broadcast the pong message if the given condition in it's closure is false.
+        pub async fn pong_if_not<F>(&mut self, message: Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+            for connection in &mut self.connections { 
+                if !condition(connection) { 
+                    let msg = Message::Pong(message.clone()); 
+                    let receiver = &mut connection.receiver; 
+                    let _ = receiver.send(msg).await;
+                } 
+            } 
+        }
     }
 
     impl<T: Display + Serialize, S: Display + Serialize> Broadcaster<T, S> {
@@ -342,7 +374,7 @@ pub mod normal {
             } 
         }
 
-        /// Broadcast the message directly.
+        /// Broadcast the ping message directly.
         pub async fn ping(&mut self, bytes: Vec<u8>) { 
             for connection in &mut self.connections { 
                 let msg = Message::Ping(bytes.clone());
@@ -352,7 +384,7 @@ pub mod normal {
             }
         }
         
-        /// broadcast the message if the given condition in it's closure is true.
+        /// broadcast the ping message if the given condition in it's closure is true.
         pub async fn ping_if<F>(&mut self, bytes: Vec<u8>, condition: F) where F: Fn(&Connection) -> bool, { 
             for connection in &mut self.connections { 
                 if condition(connection) { 
@@ -363,7 +395,7 @@ pub mod normal {
             } 
         }
         
-        /// broadcast the message if the given condition in it's closure is false.
+        /// broadcast the ping message if the given condition in it's closure is false.
         pub async fn ping_if_not<F>(&mut self, bytes: Vec<u8>, condition: F) where F: Fn(&Connection) -> bool { 
             for connection in &mut self.connections { 
                 if !condition(connection) { 
@@ -373,6 +405,38 @@ pub mod normal {
                 } 
             } 
         }
+
+        /// Broadcast the pong message directly.
+        pub async fn pong(&mut self, bytes: Vec<u8>) { 
+            for connection in &mut self.connections { 
+                let msg = Message::Pong(bytes.clone());
+                let receiver = &mut connection.receiver; 
+                                
+                let _ = receiver.send(msg).await;
+            }
+        }
+                
+        /// broadcast the pong message if the given condition in it's closure is true.
+        pub async fn pong_if<F>(&mut self, bytes: Vec<u8>, condition: F) where F: Fn(&Connection) -> bool, { 
+            for connection in &mut self.connections { 
+                if condition(connection) { 
+                    let msg = Message::Pong(bytes.clone());
+                    let receiver = &mut connection.receiver; 
+                    let _ = receiver.send(msg).await;
+                } 
+            } 
+        }
+                
+        /// broadcast the pong message if the given condition in it's closure is false.
+        pub async fn pong_if_not<F>(&mut self, bytes: Vec<u8>, condition: F) where F: Fn(&Connection) -> bool { 
+            for connection in &mut self.connections { 
+                if !condition(connection) { 
+                    let msg = Message::Pong(bytes.clone()); 
+                    let receiver = &mut connection.receiver; 
+                    let _ = receiver.send(msg).await;
+                } 
+            } 
+        }   
     }
 
     impl Broadcaster {
