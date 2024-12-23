@@ -189,7 +189,11 @@ async fn handle_socket(socket: WebSocket, Query(query): Query<WebsocketQueries>,
 
                         let _ = broadcaster.room(query.room.clone()).ping(pong).await;
                     },
-                    Message::Binary(binary) => println!("binary: {:#?}", binary)
+                    Message::Binary(binary) => {
+                        let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(query.room.clone()).binary(binary).await;
+                    }
                 }
             },
             Err(error) => println!("that error occured: {}", error)

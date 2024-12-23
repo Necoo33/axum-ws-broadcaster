@@ -195,6 +195,8 @@ async fn websocket_handler(ws: WebSocketUpgrade<String, WebsocketInput>, Query(q
 
 #[cfg(feature = "typed")]
 async fn handle_socket(socket: WebSocket<String, WebsocketInput>, Query(query): Query<WebsocketQueries>, state: Arc<RwLock<Broadcaster<String, WebsocketInput>>>) {
+    use axum::extract::ws::Message;
+
     let (receiver, mut stream) = Broadcaster::configure(socket);
 
     let broadcaster = Broadcaster::handle(&state, query.room.clone(), query.id.clone(), receiver).await;
@@ -203,7 +205,7 @@ async fn handle_socket(socket: WebSocket<String, WebsocketInput>, Query(query): 
         match msg_result {
             Ok(message) => {
                 match message {
-                    Message::Item(input) => {
+                    axum_typed_websockets::Message::Item(input) => {
                         let output = WebsocketOutput {
                             name: input.name,
                             id: input.id,
@@ -216,19 +218,19 @@ async fn handle_socket(socket: WebSocket<String, WebsocketInput>, Query(query): 
 
                         let _ = broadcaster.room(query.room.clone()).broadcast(output).await;
                     },
-                    Message::Close(_) => {
+                    axum_typed_websockets::Message::Close(_) => {
                         let mut broadcaster = broadcaster.write().await;
 
                         let _ = broadcaster.remove_connection(query.id).unwrap().close().await;
                         
                         return;
                     },
-                    Message::Ping(ping) => {
+                    axum_typed_websockets::Message::Ping(ping) => {
                         let mut broadcaster = broadcaster.write().await;
 
                         let _ = broadcaster.room(query.room.clone()).pong(ping).await;
                     },
-                    Message::Pong(pong) => {
+                    axum_typed_websockets::Message::Pong(pong) => {
                         let mut broadcaster = broadcaster.write().await;
 
                         let _ = broadcaster.room(query.room.clone()).ping(pong).await;

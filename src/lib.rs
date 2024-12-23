@@ -436,7 +436,39 @@ pub mod normal {
                     let _ = receiver.send(msg).await;
                 } 
             } 
-        }   
+        }
+
+        /// Broadcast the raw binary bytes directly.
+        pub async fn binary(&mut self, bytes: Vec<u8>) { 
+            for connection in &mut self.connections { 
+                let msg = Message::Binary(bytes.clone());
+                let receiver = &mut connection.receiver; 
+                                        
+                let _ = receiver.send(msg).await;
+            }
+        }
+
+        /// broadcast the raw binary bytes if the given condition in it's closure is true.
+        pub async fn binary_if<F>(&mut self, bytes: Vec<u8>, condition: F) where F: Fn(&Connection) -> bool, { 
+            for connection in &mut self.connections { 
+                if condition(connection) { 
+                    let msg = Message::Binary(bytes.clone());
+                    let receiver = &mut connection.receiver; 
+                    let _ = receiver.send(msg).await;
+                } 
+            } 
+        }
+
+        /// broadcast the raw binary bytes if the given condition in it's closure is false.
+        pub async fn binary_if_not<F>(&mut self, bytes: Vec<u8>, condition: F) where F: Fn(&Connection) -> bool, { 
+            for connection in &mut self.connections { 
+                if !condition(connection) { 
+                    let msg = Message::Binary(bytes.clone());
+                    let receiver = &mut connection.receiver; 
+                    let _ = receiver.send(msg).await;
+                } 
+            } 
+        }
     }
 
     impl Broadcaster {

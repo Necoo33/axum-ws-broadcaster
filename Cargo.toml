@@ -1,6 +1,6 @@
 [package]
 name = "axum-ws-broadcaster"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 authors = ["Necdet Arda Etiman <arda_etiman_799@windowslive.com>"]
 repository = "https://github.com/Necoo33/axum-ws-broadcaster"
