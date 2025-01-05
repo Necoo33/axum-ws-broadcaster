@@ -14,7 +14,7 @@ Add that to your `Cargo.toml` file:
 
 ```toml
 
-axum-ws-broadcaster = "0.1.0"
+axum-ws-broadcaster = "0.5.1"
 
 # Or:
 
@@ -145,15 +145,40 @@ async fn handle_socket(socket: WebSocket, Query(query): Query<WebsocketQueries>,
                         let _ = broadcaster.room(query.room.clone()).broadcast(input).await;
                     },
                     Message::Close(_) => {
+                        // this is the old way of closing connections and making cleanup:
+
                         let mut broadcaster = broadcaster.write().await;
 
                         let _ = broadcaster.remove_connection(query.id).unwrap().close().await;
+
+                        // the new way. This removes all the connections but keeps room open:
+                        let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(query.room).close(None).await;
+
+                        // this is the most proper way if you want to fully close a room:
+
+                        let mut broadcaster = broadcaster.write().await;
                         
+                        let _ = broadcaster.remove_room(query.room).await;
+
                         return;
                     },
-                    Message::Ping(ping) => println!("ping: {:#?}", ping),
-                    Message::Pong(pong) => println!("pong: {:#?}", pong),
-                    Message::Binary(binary) => println!("binary: {:#?}", binary)
+                    Message::Ping(ping) => {
+                        let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(query.room.clone()).pong(ping).await;
+                    },
+                    Message::Pong(pong) => {
+                        let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(query.room.clone()).ping(pong).await;
+                    },
+                    Message::Binary(binary) => {
+                        let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(query.room.clone()).binary(binary).await;
+                    }
                 }
             },
             Err(error) => println!("that error occured: {}", error)
@@ -199,14 +224,34 @@ async fn handle_socket(socket: WebSocket<String, WebsocketInput>, Query(query): 
                         let _ = broadcaster.room(query.room.clone()).broadcast(output).await;
                     },
                     Message::Close(_) => {
+                        // this is the old way of closing connections and making cleanup:
                         let mut broadcaster = broadcaster.write().await;
 
                         let _ = broadcaster.remove_connection(query.id).unwrap().close().await;
+
+                        // the new way. This removes all the connections but keeps room open:
+                        let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(query.room).close(None).await;
+
+                        // this is the most proper way if you want to fully close a room:
+
+                        let mut broadcaster = broadcaster.write().await;
+                        
+                        let _ = broadcaster.remove_room(query.room).await;
                         
                         return;
                     },
-                    Message::Ping(ping) => println!("ping: {:#?}", ping),
-                    Message::Pong(pong) => println!("pong: {:#?}", pong)
+                    Message::Ping(ping) => {
+                        let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(query.room.clone()).pong(ping).await;
+                    },
+                    Message::Pong(pong) => {
+                        let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(query.room.clone()).ping(pong).await;
+                    }
                 }
             },
             Err(error) => println!("that error occured: {}", error)

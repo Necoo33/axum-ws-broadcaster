@@ -225,9 +225,21 @@ async fn handle_socket(socket: WebSocket<String, WebsocketInput>, Query(query): 
                         let _ = broadcaster.room(query.room.clone()).broadcast(output).await;
                     },
                     axum_typed_websockets::Message::Close(_) => {
-                        let mut broadcaster = broadcaster.write().await;
+                        // this is the old way of closing connections and making cleanup:
+                        /*let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.remove_connection(query.id).unwrap().close().await;
+                        let _ = broadcaster.remove_connection(query.id).unwrap().close().await;*/
+
+                        // the new way. This removes all the connections but keeps room open:
+                        /*let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(query.room).close(None).await;*/
+
+                        // this is the most proper way if you want to fully close a room:
+
+                        let mut broadcaster = broadcaster.write().await;
+                        
+                        let _ = broadcaster.remove_room(query.room).await;
                         
                         return;
                     },
