@@ -5,6 +5,7 @@ pub mod typed {
     use std::{fmt::Display, sync::Arc};
     use tokio::sync::RwLock;
     use axum_typed_websockets::{Message, WebSocket};
+    use axum::extract::ws::CloseFrame;
 
     /// main broadcaster for typed api.
     #[derive(Debug)]
@@ -170,6 +171,56 @@ pub mod typed {
                 } 
             } 
         }
+
+        /// Close all connections and remove it from it's room but not close it.
+        pub async fn close(&mut self, close_frame: Option<CloseFrame<'static>>) where T: Clone { 
+            self.connections.retain_mut(|connection| {
+                let msg = Message::Close(close_frame.clone());
+                let receiver = &mut connection.receiver; 
+                                                        
+                let _ = async {
+                    let _ = receiver.send(msg).await;
+                };
+                        
+                false
+            });
+        }
+        
+        /// close each connection and remove them from room if the given condition in it's closure is true.
+        pub async fn close_if<F>(&mut self, close_frame: Option<CloseFrame<'static>>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+            self.connections.retain_mut(|connection| {
+                if condition(&connection) {
+                    let msg = Message::Close(close_frame.clone());
+                    let receiver = &mut connection.receiver; 
+                                                            
+                    let _ = async {
+                        let _ =  receiver.send(msg).await;
+                    };
+                            
+                    false
+                } else {
+                    true
+                }
+            });
+        }
+        
+        /// close each connection and remove them from room if the given condition in it's closure is false.
+        pub async fn close_if_not<F>(&mut self, close_frame: Option<CloseFrame<'static>>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+            self.connections.retain_mut(|connection| {
+                if !condition(&connection) {
+                    let msg = Message::Close(close_frame.clone());
+                    let receiver = &mut connection.receiver; 
+                                                                    
+                    let _ = async {
+                        let _ =  receiver.send(msg).await;
+                    };
+                                    
+                    false
+                } else {
+                    true
+                }
+            });
+        }
     }
 
     impl<T: Display + Serialize, S: Display + Serialize> Broadcaster<T, S> {
@@ -224,10 +275,14 @@ pub mod typed {
             return self.rooms.iter().any(|room| room.id == *id);
         }
 
-        /// remove a room with given id.
-        pub fn remove_room(&mut self, id: String) {
-            self.rooms.retain(|room| { 
-                if room.id == id { 
+        /// it removes a room with given id and closes all the connections inside of it.
+        pub async fn remove_room(&mut self, id: String) where T: Clone {
+            self.rooms.retain_mut(|room| { 
+                if room.id == id {
+                    let _ = async {
+                        let _ = room.close(None).await;
+                    };
+                    
                     false 
                 } else { 
                     true 
@@ -268,7 +323,7 @@ pub mod typed {
 }
 
 pub mod normal {
-    use axum::extract::ws::{Message, WebSocket};
+    use axum::extract::ws::{CloseFrame, Message, WebSocket};
     use std::sync::Arc;
     use tokio::sync::RwLock;
     use futures_util::{sink::SinkExt, stream::{SplitSink, SplitStream, StreamExt}};
@@ -469,6 +524,56 @@ pub mod normal {
                 } 
             } 
         }
+
+        /// Close all connections and remove it from it's room but not close it.
+        pub async fn close(&mut self, close_frame: Option<CloseFrame<'static>>) { 
+            self.connections.retain_mut(|connection| {
+                let msg = Message::Close(close_frame.clone());
+                let receiver = &mut connection.receiver; 
+                                                
+                let _ = async {
+                    let _ = receiver.send(msg).await;
+                };
+                
+                false
+            });
+        }
+
+        /// close each connection and remove them from room if the given condition in it's closure is true.
+        pub async fn close_if<F>(&mut self, close_frame: Option<CloseFrame<'static>>, condition: F) where F: Fn(&Connection) -> bool, { 
+            self.connections.retain_mut(|connection| {
+                if condition(&connection) {
+                    let msg = Message::Close(close_frame.clone());
+                    let receiver = &mut connection.receiver; 
+                                                    
+                    let _ = async {
+                        let _ =  receiver.send(msg).await;
+                    };
+                    
+                    false
+                } else {
+                    true
+                }
+            });
+        }
+
+        /// close each connection and remove them from room if the given condition in it's closure is false.
+        pub async fn close_if_not<F>(&mut self, close_frame: Option<CloseFrame<'static>>, condition: F) where F: Fn(&Connection) -> bool, { 
+            self.connections.retain_mut(|connection| {
+                if !condition(&connection) {
+                    let msg = Message::Close(close_frame.clone());
+                    let receiver = &mut connection.receiver; 
+                                                            
+                    let _ = async {
+                        let _ =  receiver.send(msg).await;
+                    };
+                            
+                    false
+                } else {
+                    true
+                }
+            });
+        }
     }
 
     impl Broadcaster {
@@ -523,10 +628,14 @@ pub mod normal {
             return self.rooms.iter().any(|room| room.id == *id);
         }
 
-        /// it removes a room with given id.
-        pub fn remove_room(&mut self, id: String) {
-            self.rooms.retain(|room| { 
-                if room.id == id { 
+        /// it removes a room with given id and closes all the connections inside of it.
+        pub async fn remove_room(&mut self, id: String) {
+            self.rooms.retain_mut(|room| { 
+                if room.id == id {
+                    let _ = async {
+                        let _ = room.close(None).await;
+                    };
+                    
                     false 
                 } else { 
                     true 

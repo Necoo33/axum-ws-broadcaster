@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v0.5.0
+
+- Added `.close()`, `.close_if()` and `.close_if_not()` methods on the `Room` struct of both implementations. They closes the connection and removes it from it's room.
+- Also added `.remove_room()` method for `Broadcaster` struct of both implementations. It removes the room with given id and closes all it's connections.
+
 ## v0.4.0
 
 - Added `.binary()`, `.binary_if()` and `.binary_if_not()` method for normal api.

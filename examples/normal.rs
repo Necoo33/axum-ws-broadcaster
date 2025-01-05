@@ -3,7 +3,7 @@ use std::{fmt::Display, sync::Arc};
 use axum::{Router, response::{Response, IntoResponse}, routing::get, extract::{State, Query, ws::{WebSocket, WebSocketUpgrade, Message}}};
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
-use futures_util::{SinkExt, StreamExt};
+use futures_util::StreamExt;
 
 #[tokio::main]
 async fn main() {
@@ -173,10 +173,25 @@ async fn handle_socket(socket: WebSocket, Query(query): Query<WebsocketQueries>,
                         let _ = broadcaster.room(query.room.clone()).broadcast(input).await;
                     },
                     Message::Close(_) => {
+                        // this is the old way of closing connections and making cleanup:
+
+                        /*
                         let mut broadcaster = broadcaster.write().await;
 
                         let _ = broadcaster.remove_connection(query.id).unwrap().close().await;
+                        */
+
+                        // the new way. This removes all the connections but keeps room open:
+                        /*let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(query.room).close(None).await;*/
+
+                        // this is the most proper way if you want to fully close a room:
+
+                        let mut broadcaster = broadcaster.write().await;
                         
+                        let _ = broadcaster.remove_room(query.room).await;
+
                         return;
                     },
                     Message::Ping(ping) => {
