@@ -5,7 +5,7 @@ pub mod typed {
     use std::{fmt::Display, sync::Arc};
     use tokio::sync::RwLock;
     use axum_typed_websockets::{Message, WebSocket};
-    use axum::extract::ws::CloseFrame;
+    use axum_7_9::extract::ws::CloseFrame;
 
     /// main broadcaster for typed api.
     #[derive(Debug)]
@@ -323,7 +323,7 @@ pub mod typed {
 }
 
 pub mod normal {
-    use axum::extract::ws::{CloseFrame, Message, WebSocket};
+    use axum_8_1::{body::Bytes, extract::ws::{CloseFrame, Message, Utf8Bytes, WebSocket}};
     use std::sync::Arc;
     use tokio::sync::RwLock;
     use futures_util::{sink::SinkExt, stream::{SplitSink, SplitStream, StreamExt}};
@@ -398,7 +398,7 @@ pub mod normal {
         }
 
         /// Broadcast the message directly.
-        pub async fn broadcast(&mut self, message: String) { 
+        pub async fn broadcast(&mut self, message: Utf8Bytes) { 
             for connection in &mut self.connections { 
                 let msg = Message::Text(message.clone());
                 let receiver = &mut connection.receiver; 
@@ -408,7 +408,7 @@ pub mod normal {
         }
 
         /// broadcast the message if the given condition in it's closure is true.
-        pub async fn broadcast_if<F>(&mut self, message: String, condition: F) where F: Fn(&Connection) -> bool, { 
+        pub async fn broadcast_if<F>(&mut self, message: Utf8Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
             for connection in &mut self.connections { 
                 if condition(connection) { 
                     let msg = Message::Text(message.clone()); 
@@ -419,7 +419,7 @@ pub mod normal {
         }
 
         /// broadcast the message if the given condition in it's closure is false.
-        pub async fn broadcast_if_not<F>(&mut self, message: String, condition: F) where F: Fn(&Connection) -> bool { 
+        pub async fn broadcast_if_not<F>(&mut self, message: Utf8Bytes, condition: F) where F: Fn(&Connection) -> bool { 
             for connection in &mut self.connections { 
                 if !condition(connection) { 
                     let msg = Message::Text(message.clone()); 
@@ -430,7 +430,7 @@ pub mod normal {
         }
 
         /// Broadcast the ping message directly.
-        pub async fn ping(&mut self, bytes: Vec<u8>) { 
+        pub async fn ping(&mut self, bytes: Bytes) { 
             for connection in &mut self.connections { 
                 let msg = Message::Ping(bytes.clone());
                 let receiver = &mut connection.receiver; 
@@ -440,7 +440,7 @@ pub mod normal {
         }
         
         /// broadcast the ping message if the given condition in it's closure is true.
-        pub async fn ping_if<F>(&mut self, bytes: Vec<u8>, condition: F) where F: Fn(&Connection) -> bool, { 
+        pub async fn ping_if<F>(&mut self, bytes: Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
             for connection in &mut self.connections { 
                 if condition(connection) { 
                     let msg = Message::Ping(bytes.clone());
@@ -451,7 +451,7 @@ pub mod normal {
         }
         
         /// broadcast the ping message if the given condition in it's closure is false.
-        pub async fn ping_if_not<F>(&mut self, bytes: Vec<u8>, condition: F) where F: Fn(&Connection) -> bool { 
+        pub async fn ping_if_not<F>(&mut self, bytes: Bytes, condition: F) where F: Fn(&Connection) -> bool { 
             for connection in &mut self.connections { 
                 if !condition(connection) { 
                     let msg = Message::Ping(bytes.clone()); 
@@ -462,7 +462,7 @@ pub mod normal {
         }
 
         /// Broadcast the pong message directly.
-        pub async fn pong(&mut self, bytes: Vec<u8>) { 
+        pub async fn pong(&mut self, bytes: Bytes) { 
             for connection in &mut self.connections { 
                 let msg = Message::Pong(bytes.clone());
                 let receiver = &mut connection.receiver; 
@@ -472,7 +472,7 @@ pub mod normal {
         }
                 
         /// broadcast the pong message if the given condition in it's closure is true.
-        pub async fn pong_if<F>(&mut self, bytes: Vec<u8>, condition: F) where F: Fn(&Connection) -> bool, { 
+        pub async fn pong_if<F>(&mut self, bytes: Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
             for connection in &mut self.connections { 
                 if condition(connection) { 
                     let msg = Message::Pong(bytes.clone());
@@ -483,7 +483,7 @@ pub mod normal {
         }
                 
         /// broadcast the pong message if the given condition in it's closure is false.
-        pub async fn pong_if_not<F>(&mut self, bytes: Vec<u8>, condition: F) where F: Fn(&Connection) -> bool { 
+        pub async fn pong_if_not<F>(&mut self, bytes: Bytes, condition: F) where F: Fn(&Connection) -> bool { 
             for connection in &mut self.connections { 
                 if !condition(connection) { 
                     let msg = Message::Pong(bytes.clone()); 
@@ -494,7 +494,7 @@ pub mod normal {
         }
 
         /// Broadcast the raw binary bytes directly.
-        pub async fn binary(&mut self, bytes: Vec<u8>) { 
+        pub async fn binary(&mut self, bytes: Bytes) { 
             for connection in &mut self.connections { 
                 let msg = Message::Binary(bytes.clone());
                 let receiver = &mut connection.receiver; 
@@ -504,7 +504,7 @@ pub mod normal {
         }
 
         /// broadcast the raw binary bytes if the given condition in it's closure is true.
-        pub async fn binary_if<F>(&mut self, bytes: Vec<u8>, condition: F) where F: Fn(&Connection) -> bool, { 
+        pub async fn binary_if<F>(&mut self, bytes: Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
             for connection in &mut self.connections { 
                 if condition(connection) { 
                     let msg = Message::Binary(bytes.clone());
@@ -515,7 +515,7 @@ pub mod normal {
         }
 
         /// broadcast the raw binary bytes if the given condition in it's closure is false.
-        pub async fn binary_if_not<F>(&mut self, bytes: Vec<u8>, condition: F) where F: Fn(&Connection) -> bool, { 
+        pub async fn binary_if_not<F>(&mut self, bytes: Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
             for connection in &mut self.connections { 
                 if !condition(connection) { 
                     let msg = Message::Binary(bytes.clone());
@@ -526,7 +526,7 @@ pub mod normal {
         }
 
         /// Close all connections and remove it from it's room but not close it.
-        pub async fn close(&mut self, close_frame: Option<CloseFrame<'static>>) { 
+        pub async fn close(&mut self, close_frame: Option<CloseFrame>) { 
             self.connections.retain_mut(|connection| {
                 let msg = Message::Close(close_frame.clone());
                 let receiver = &mut connection.receiver; 
@@ -540,7 +540,7 @@ pub mod normal {
         }
 
         /// close each connection and remove them from room if the given condition in it's closure is true.
-        pub async fn close_if<F>(&mut self, close_frame: Option<CloseFrame<'static>>, condition: F) where F: Fn(&Connection) -> bool, { 
+        pub async fn close_if<F>(&mut self, close_frame: Option<CloseFrame>, condition: F) where F: Fn(&Connection) -> bool, { 
             self.connections.retain_mut(|connection| {
                 if condition(&connection) {
                     let msg = Message::Close(close_frame.clone());
@@ -558,7 +558,7 @@ pub mod normal {
         }
 
         /// close each connection and remove them from room if the given condition in it's closure is false.
-        pub async fn close_if_not<F>(&mut self, close_frame: Option<CloseFrame<'static>>, condition: F) where F: Fn(&Connection) -> bool, { 
+        pub async fn close_if_not<F>(&mut self, close_frame: Option<CloseFrame>, condition: F) where F: Fn(&Connection) -> bool, { 
             self.connections.retain_mut(|connection| {
                 if !condition(&connection) {
                     let msg = Message::Close(close_frame.clone());

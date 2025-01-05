@@ -1,6 +1,6 @@
 use axum_wsb::normal::Broadcaster;
 use std::{fmt::Display, sync::Arc};
-use axum::{Router, response::{Response, IntoResponse}, routing::get, extract::{State, Query, ws::{WebSocket, WebSocketUpgrade, Message}}};
+use axum_8_1::{Router, response::{Response, IntoResponse}, routing::get, extract::{State, Query, ws::{WebSocket, WebSocketUpgrade, Message}}};
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use futures_util::StreamExt;
@@ -17,7 +17,7 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:5000").await.unwrap();
     
-    axum::serve(listener, router).await.unwrap();
+    axum_8_1::serve(listener, router).await.unwrap();
 }
 
 pub async fn home_controller() -> Response<String> {
@@ -58,7 +58,8 @@ pub async fn chat_controller() -> Response<String> {
                         <body>
                             <input type='message' placeholder='send chat' class='message-input'>
                             <input type='submit' value='send' class='send-chat-button'>
-
+                            <button class='close-button'>close</button>
+                            
                             <div class='chats'>
 
                             </div>
@@ -86,6 +87,7 @@ pub async fn chat_controller() -> Response<String> {
                             const send = document.querySelector('.send-chat-button'); 
                             const messageInput = document.querySelector('.message-input');  
                             const query = new URLSearchParams(window.location.search); 
+                            const closeButton = document.querySelector('.close-button');
 
                             /* Note: That configuration doesn't work on chromium based browsers,
                             Because they don't let you to send query parameters to websocket 
@@ -140,6 +142,10 @@ pub async fn chat_controller() -> Response<String> {
                                 websocket.send(JSON.stringify(message)); 
                                 
                                 messageInput.value = ''; 
+                            }); 
+
+                            closeButton.addEventListener('pointerdown', function() { 
+                                websocket.close();
                             }); 
                         </script>
                         </body>

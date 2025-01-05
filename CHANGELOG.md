@@ -1,8 +1,12 @@
 # CHANGELOG
 
+## v0.5.1
+
+- Compatibility update. Normal api's Axum version updated to `v0.8.1` and made some compatibility updates. Typed api still uses axum `v0.7.9`.
+
 ## v0.5.0
 
-- Added `.close()`, `.close_if()` and `.close_if_not()` methods on the `Room` struct of both implementations. They closes the connection and removes it from it's room.
+- Added `.close()`, `.close_if()` and `.close_if_not()` methods on the `Room` struct of both implementations. They closes the connection and removes it from it's room but they don't close the room.
 - Also added `.remove_room()` method for `Broadcaster` struct of both implementations. It removes the room with given id and closes all it's connections.
 
 ## v0.4.0

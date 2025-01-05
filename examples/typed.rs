@@ -5,7 +5,7 @@ use std::{fmt::Display, sync::Arc};
 #[cfg(feature = "typed")]
 use axum_typed_websockets::{WebSocket, WebSocketUpgrade, Message};
 #[cfg(feature = "typed")]
-use axum::{Router, response::{Response, IntoResponse}, routing::get, extract::{State, Query}};
+use axum_7_9::{Router, response::{Response, IntoResponse}, routing::get, extract::{State, Query}};
 #[cfg(feature = "typed")]
 use tokio::sync::RwLock;
 #[cfg(feature = "typed")]
@@ -31,7 +31,7 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:5000").await.unwrap();
     
     #[cfg(feature = "typed")]
-    axum::serve(listener, router).await.unwrap();
+    axum_7_9::serve(listener, router).await.unwrap();
 }
 
 #[cfg(feature = "typed")]
@@ -74,6 +74,7 @@ pub async fn chat_controller() -> Response<String> {
                         <body>
                             <input type='message' placeholder='send chat' class='message-input'>
                             <input type='submit' value='send' class='send-chat-button'>
+                            <button class='close-button'>close</button>
 
                             <div class='chats'>
 
@@ -102,6 +103,7 @@ pub async fn chat_controller() -> Response<String> {
                             const send = document.querySelector('.send-chat-button'); 
                             const messageInput = document.querySelector('.message-input');  
                             const query = new URLSearchParams(window.location.search); 
+                            const closeButton = document.querySelector('.close-button');
 
                             /* Note: That configuration doesn't work on chromium based browsers,
                             Because they don't let you to send query parameters to websocket 
@@ -177,6 +179,10 @@ pub async fn chat_controller() -> Response<String> {
                                 
                                 messageInput.value = ''; 
                             }); 
+
+                            closeButton.addEventListener('pointerdown', function() { 
+                                websocket.close();
+                            }); 
                         </script>
                         </body>
                         </html>".to_string();
@@ -195,7 +201,7 @@ async fn websocket_handler(ws: WebSocketUpgrade<String, WebsocketInput>, Query(q
 
 #[cfg(feature = "typed")]
 async fn handle_socket(socket: WebSocket<String, WebsocketInput>, Query(query): Query<WebsocketQueries>, state: Arc<RwLock<Broadcaster<String, WebsocketInput>>>) {
-    use axum::extract::ws::Message;
+    use axum_7_9::extract::ws::Message;
 
     let (receiver, mut stream) = Broadcaster::configure(socket);
 
