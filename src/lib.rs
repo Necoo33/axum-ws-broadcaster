@@ -39,14 +39,14 @@ pub mod typed {
 
     impl<T: Display + Serialize, S: Display + Serialize> Room<T, S> where SplitSink<WebSocket<T, S>, Message<T>>: Sink<Message<T>> + Unpin {
         /// check if a connection with given id exist and if it's not, add a connection to a room with that ip:
-        pub fn add_connection(&mut self, id: String, receiver: SplitSink<WebSocket<T, S>, Message<T>>) {
-            let check_is_connection_exist = self.connections.iter().any(|room| room.id == id);
+        pub fn add_connection(&mut self, id: &String, receiver: SplitSink<WebSocket<T, S>, Message<T>>) {
+            let check_is_connection_exist = self.connections.iter().any(|room| room.id == *id);
 
             match check_is_connection_exist {
                 true => (),
                 false => {
                     let connection = Connection {
-                        id,
+                        id: id.clone(),
                         receiver
                     };
 
@@ -77,7 +77,7 @@ pub mod typed {
         }
 
         /// broadcast the message directly:
-        pub async fn broadcast(&mut self, message: T) where T: Clone { 
+        pub async fn broadcast(&mut self, message: &T) where T: Clone { 
             for connection in &mut self.connections { 
                 let msg = Message::Item(message.clone());
                 let receiver = &mut connection.receiver; 
@@ -87,7 +87,7 @@ pub mod typed {
         }
 
         /// broadcast the message if the given condition in it's closure is true.
-        pub async fn broadcast_if<F>(&mut self, message: T, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+        pub async fn broadcast_if<F>(&mut self, message: &T, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
             for connection in &mut self.connections { 
                 if condition(connection) { 
                     let msg = Message::Item(message.clone()); 
@@ -98,7 +98,7 @@ pub mod typed {
         }
 
         /// broadcast the message if the given condition in it's closure is false.
-        pub async fn broadcast_if_not<F>(&mut self, message: T, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+        pub async fn broadcast_if_not<F>(&mut self, message: &T, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
             for connection in &mut self.connections { 
                 if !condition(connection) { 
                     let msg = Message::Item(message.clone()); 
@@ -109,7 +109,7 @@ pub mod typed {
         }
 
         /// broadcast the message directly:
-        pub async fn ping(&mut self, message: Vec<u8>) where T: Clone {
+        pub async fn ping(&mut self, message: &Vec<u8>) where T: Clone {
             for connection in &mut self.connections { 
                 let msg = Message::Ping(message.clone());
                 let receiver = &mut connection.receiver; 
@@ -119,7 +119,7 @@ pub mod typed {
         }
 
         /// broadcast the message if the given condition in it's closure is true.
-        pub async fn ping_if<F>(&mut self, message: Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+        pub async fn ping_if<F>(&mut self, message: &Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
             for connection in &mut self.connections { 
                 if condition(connection) { 
                     let msg = Message::Ping(message.clone()); 
@@ -130,7 +130,7 @@ pub mod typed {
         }
         
         /// broadcast the message if the given condition in it's closure is false.
-        pub async fn ping_if_not<F>(&mut self, message: Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+        pub async fn ping_if_not<F>(&mut self, message: &Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
             for connection in &mut self.connections { 
                 if !condition(connection) { 
                     let msg = Message::Ping(message.clone()); 
@@ -141,7 +141,7 @@ pub mod typed {
         }
 
         /// broadcast the pong message directly:
-        pub async fn pong(&mut self, message: Vec<u8>) where T: Clone {
+        pub async fn pong(&mut self, message: &Vec<u8>) where T: Clone {
             for connection in &mut self.connections { 
                 let msg = Message::Pong(message.clone());
                 let receiver = &mut connection.receiver; 
@@ -151,7 +151,7 @@ pub mod typed {
         }
         
         /// broadcast the pong message if the given condition in it's closure is true.
-        pub async fn pong_if<F>(&mut self, message: Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+        pub async fn pong_if<F>(&mut self, message: &Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
             for connection in &mut self.connections { 
                 if condition(connection) { 
                     let msg = Message::Pong(message.clone()); 
@@ -162,7 +162,7 @@ pub mod typed {
         }
                 
         /// broadcast the pong message if the given condition in it's closure is false.
-        pub async fn pong_if_not<F>(&mut self, message: Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+        pub async fn pong_if_not<F>(&mut self, message: &Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
             for connection in &mut self.connections { 
                 if !condition(connection) { 
                     let msg = Message::Pong(message.clone()); 
@@ -235,7 +235,7 @@ pub mod typed {
         }
 
         /// handle the all thing. If you use that api, there is no need to any other configuration for grouping and identifying connections:
-        pub async fn handle(broadcaster: &Arc<RwLock<Self>>, room_id: String, conn_id: String, receiver: SplitSink<WebSocket<T, S>, Message<T>>) -> Arc<RwLock<Self>> {
+        pub async fn handle(broadcaster: &Arc<RwLock<Self>>, room_id: &String, conn_id: &String, receiver: SplitSink<WebSocket<T, S>, Message<T>>) -> Arc<RwLock<Self>> {
             let mut broadcaster_write = broadcaster.write().await;
 
             broadcaster_write.handle_room(room_id).add_connection(conn_id, receiver);
@@ -244,13 +244,13 @@ pub mod typed {
         }
 
         /// check if a room with given id exist and if it's not create one.
-        pub fn handle_room(&mut self, id: String) -> &mut Room<T, S> {
-            if let Some(index) = self.rooms.iter().position(|room| room.id == id) {
+        pub fn handle_room(&mut self, id: &String) -> &mut Room<T, S> {
+            if let Some(index) = self.rooms.iter().position(|room| room.id == *id) {
                 return &mut self.rooms[index];
             }
         
             self.rooms.push(Room {
-                id,
+                id: id.clone(),
                 connections: vec![],
             });
         
@@ -258,7 +258,7 @@ pub mod typed {
         }
 
         /// Get the Room with given id. If there is a risk of unextistance of the room, use ".check_room()" instead.
-        pub fn room(&mut self, id: String) -> &mut Room<T, S> {
+        pub fn room(&mut self, id: &String) -> &mut Room<T, S> {
             return self.rooms.iter_mut().find(|room| room.id == *id).unwrap();
         }
 
@@ -276,9 +276,9 @@ pub mod typed {
         }
 
         /// it removes a room with given id and closes all the connections inside of it.
-        pub async fn remove_room(&mut self, id: String) where T: Clone {
+        pub async fn remove_room(&mut self, id: &String) where T: Clone {
             self.rooms.retain_mut(|room| { 
-                if room.id == id {
+                if room.id == *id {
                     let _ = async {
                         let _ = room.close(None).await;
                     };
@@ -302,9 +302,9 @@ pub mod typed {
         }
 
         /// Removes the connection from Room. Warning: Because the async closures are not stable yet, we cannot close the connection in that function, you have to make cleanup on your cadebase. For that, check the examples & Documentation.
-        pub fn remove_connection(&mut self, id: String) -> Option<SplitSink<WebSocket<T, S>, Message<T>>> {
+        pub fn remove_connection(&mut self, id: &String) -> Option<SplitSink<WebSocket<T, S>, Message<T>>> {
             for room in &mut self.rooms {
-                if let Some(pos) = room.connections.iter().position(|connection| connection.id == id) {
+                if let Some(pos) = room.connections.iter().position(|connection| connection.id == *id) {
                     let connection = room.connections.remove(pos);
                     return Some(connection.receiver);
                 }
@@ -360,14 +360,14 @@ pub mod normal {
 
     impl Room {
         /// check if a connection with given id exist and if it's not, add a connection to a room with that ip:
-        pub fn add_connection(&mut self, id: String, receiver: SplitSink<WebSocket, Message>) {
-            let check_is_connection_exist = self.connections.iter().any(|room| room.id == id);
+        pub fn add_connection(&mut self, id: &String, receiver: SplitSink<WebSocket, Message>) {
+            let check_is_connection_exist = self.connections.iter().any(|room| room.id == *id);
 
             match check_is_connection_exist {
                 true => (),
                 false => {
                     let connection = Connection {
-                        id,
+                        id: id.clone(),
                         receiver
                     };
 
@@ -398,7 +398,7 @@ pub mod normal {
         }
 
         /// Broadcast the message directly.
-        pub async fn broadcast(&mut self, message: Utf8Bytes) { 
+        pub async fn broadcast(&mut self, message: &Utf8Bytes) { 
             for connection in &mut self.connections { 
                 let msg = Message::Text(message.clone());
                 let receiver = &mut connection.receiver; 
@@ -408,7 +408,7 @@ pub mod normal {
         }
 
         /// broadcast the message if the given condition in it's closure is true.
-        pub async fn broadcast_if<F>(&mut self, message: Utf8Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
+        pub async fn broadcast_if<F>(&mut self, message: &Utf8Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
             for connection in &mut self.connections { 
                 if condition(connection) { 
                     let msg = Message::Text(message.clone()); 
@@ -419,7 +419,7 @@ pub mod normal {
         }
 
         /// broadcast the message if the given condition in it's closure is false.
-        pub async fn broadcast_if_not<F>(&mut self, message: Utf8Bytes, condition: F) where F: Fn(&Connection) -> bool { 
+        pub async fn broadcast_if_not<F>(&mut self, message: &Utf8Bytes, condition: F) where F: Fn(&Connection) -> bool { 
             for connection in &mut self.connections { 
                 if !condition(connection) { 
                     let msg = Message::Text(message.clone()); 
@@ -430,7 +430,7 @@ pub mod normal {
         }
 
         /// Broadcast the ping message directly.
-        pub async fn ping(&mut self, bytes: Bytes) { 
+        pub async fn ping(&mut self, bytes: &Bytes) { 
             for connection in &mut self.connections { 
                 let msg = Message::Ping(bytes.clone());
                 let receiver = &mut connection.receiver; 
@@ -440,7 +440,7 @@ pub mod normal {
         }
         
         /// broadcast the ping message if the given condition in it's closure is true.
-        pub async fn ping_if<F>(&mut self, bytes: Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
+        pub async fn ping_if<F>(&mut self, bytes: &Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
             for connection in &mut self.connections { 
                 if condition(connection) { 
                     let msg = Message::Ping(bytes.clone());
@@ -451,7 +451,7 @@ pub mod normal {
         }
         
         /// broadcast the ping message if the given condition in it's closure is false.
-        pub async fn ping_if_not<F>(&mut self, bytes: Bytes, condition: F) where F: Fn(&Connection) -> bool { 
+        pub async fn ping_if_not<F>(&mut self, bytes: &Bytes, condition: F) where F: Fn(&Connection) -> bool { 
             for connection in &mut self.connections { 
                 if !condition(connection) { 
                     let msg = Message::Ping(bytes.clone()); 
@@ -462,7 +462,7 @@ pub mod normal {
         }
 
         /// Broadcast the pong message directly.
-        pub async fn pong(&mut self, bytes: Bytes) { 
+        pub async fn pong(&mut self, bytes: &Bytes) { 
             for connection in &mut self.connections { 
                 let msg = Message::Pong(bytes.clone());
                 let receiver = &mut connection.receiver; 
@@ -472,7 +472,7 @@ pub mod normal {
         }
                 
         /// broadcast the pong message if the given condition in it's closure is true.
-        pub async fn pong_if<F>(&mut self, bytes: Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
+        pub async fn pong_if<F>(&mut self, bytes: &Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
             for connection in &mut self.connections { 
                 if condition(connection) { 
                     let msg = Message::Pong(bytes.clone());
@@ -483,7 +483,7 @@ pub mod normal {
         }
                 
         /// broadcast the pong message if the given condition in it's closure is false.
-        pub async fn pong_if_not<F>(&mut self, bytes: Bytes, condition: F) where F: Fn(&Connection) -> bool { 
+        pub async fn pong_if_not<F>(&mut self, bytes: &Bytes, condition: F) where F: Fn(&Connection) -> bool { 
             for connection in &mut self.connections { 
                 if !condition(connection) { 
                     let msg = Message::Pong(bytes.clone()); 
@@ -494,7 +494,7 @@ pub mod normal {
         }
 
         /// Broadcast the raw binary bytes directly.
-        pub async fn binary(&mut self, bytes: Bytes) { 
+        pub async fn binary(&mut self, bytes: &Bytes) { 
             for connection in &mut self.connections { 
                 let msg = Message::Binary(bytes.clone());
                 let receiver = &mut connection.receiver; 
@@ -504,7 +504,7 @@ pub mod normal {
         }
 
         /// broadcast the raw binary bytes if the given condition in it's closure is true.
-        pub async fn binary_if<F>(&mut self, bytes: Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
+        pub async fn binary_if<F>(&mut self, bytes: &Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
             for connection in &mut self.connections { 
                 if condition(connection) { 
                     let msg = Message::Binary(bytes.clone());
@@ -515,7 +515,7 @@ pub mod normal {
         }
 
         /// broadcast the raw binary bytes if the given condition in it's closure is false.
-        pub async fn binary_if_not<F>(&mut self, bytes: Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
+        pub async fn binary_if_not<F>(&mut self, bytes: &Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
             for connection in &mut self.connections { 
                 if !condition(connection) { 
                     let msg = Message::Binary(bytes.clone());
@@ -588,7 +588,7 @@ pub mod normal {
         }
 
         /// handle the all thing. If you use that api, there is no need to any other configuration for grouping and identifying connections:
-        pub async fn handle(broadcaster: &Arc<RwLock<Self>>, room_id: String, conn_id: String, receiver: SplitSink<WebSocket, Message>) -> Arc<RwLock<Self>> {
+        pub async fn handle(broadcaster: &Arc<RwLock<Self>>, room_id: &String, conn_id: &String, receiver: SplitSink<WebSocket, Message>) -> Arc<RwLock<Self>> {
             let mut broadcaster_write = broadcaster.write().await;
 
             broadcaster_write.handle_room(room_id).add_connection(conn_id, receiver);
@@ -597,13 +597,13 @@ pub mod normal {
         }
 
         /// check if a room with given id exist and if it's not create one:
-        pub fn handle_room(&mut self, id: String) -> &mut Room {
-            if let Some(index) = self.rooms.iter().position(|room| room.id == id) {
+        pub fn handle_room(&mut self, id: &String) -> &mut Room {
+            if let Some(index) = self.rooms.iter().position(|room| room.id == *id) {
                 return &mut self.rooms[index];
             }
         
             self.rooms.push(Room {
-                id,
+                id: id.clone(),
                 connections: vec![],
             });
         
@@ -611,7 +611,7 @@ pub mod normal {
         }
 
         /// Get the Room with given id. If there is a risk of unextistance of the room, use ".check_room()" instead.
-        pub fn room(&mut self, id: String) -> &mut Room {
+        pub fn room(&mut self, id: &String) -> &mut Room {
             return self.rooms.iter_mut().find(|room| room.id == *id).unwrap();
         }
 
@@ -629,9 +629,9 @@ pub mod normal {
         }
 
         /// it removes a room with given id and closes all the connections inside of it.
-        pub async fn remove_room(&mut self, id: String) {
+        pub async fn remove_room(&mut self, id: &String) {
             self.rooms.retain_mut(|room| { 
-                if room.id == id {
+                if room.id == *id {
                     let _ = async {
                         let _ = room.close(None).await;
                     };
@@ -655,9 +655,9 @@ pub mod normal {
         }
 
         /// Removes the connection from Room. Warning: Because the async closures are not stable yet, we cannot close the connection in that function, you have to make cleanup on your cadebase. For that, check the examples & Documentation.
-        pub fn remove_connection(&mut self, id: String) -> Option<SplitSink<WebSocket, Message>> {
+        pub fn remove_connection(&mut self, id: &String) -> Option<SplitSink<WebSocket, Message>> {
             for room in &mut self.rooms {
-                if let Some(pos) = room.connections.iter().position(|connection| connection.id == id) {
+                if let Some(pos) = room.connections.iter().position(|connection| connection.id == *id) {
                     let connection = room.connections.remove(pos);
                     return Some(connection.receiver);
                 }

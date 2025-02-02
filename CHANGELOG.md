@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.6.0
+
+- typed and normal api's are changed, now they uses pointers of arguments most of the time rather than using actual arguments.
+
 ## v0.5.1
 
 - Compatibility update. Normal api's Axum version updated to `v0.8.1` and made some compatibility updates. Typed api still uses axum `v0.7.9`.

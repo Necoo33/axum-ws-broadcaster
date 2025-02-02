@@ -167,7 +167,7 @@ async fn websocket_handler(ws: WebSocketUpgrade, Query(query): Query<WebsocketQu
 async fn handle_socket(socket: WebSocket, Query(query): Query<WebsocketQueries>, state: Arc<RwLock<Broadcaster>>) {
     let (receiver, mut stream) = Broadcaster::configure(socket);
 
-    let broadcaster = Broadcaster::handle(&state, query.room.clone(), query.id.clone(), receiver).await;
+    let broadcaster = Broadcaster::handle(&state, &query.room, &query.id, receiver).await;
 
     while let Some(msg_result) = stream.next().await {
         match msg_result {
@@ -176,7 +176,7 @@ async fn handle_socket(socket: WebSocket, Query(query): Query<WebsocketQueries>,
                     Message::Text(input) => {
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.room(query.room.clone()).broadcast(input).await;
+                        let _ = broadcaster.room(&query.room).broadcast(&input).await;
                     },
                     Message::Close(_) => {
                         // this is the old way of closing connections and making cleanup:
@@ -196,24 +196,24 @@ async fn handle_socket(socket: WebSocket, Query(query): Query<WebsocketQueries>,
 
                         let mut broadcaster = broadcaster.write().await;
                         
-                        let _ = broadcaster.remove_room(query.room).await;
+                        let _ = broadcaster.remove_room(&query.room).await;
 
                         return;
                     },
                     Message::Ping(ping) => {
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.room(query.room.clone()).pong(ping).await;
+                        let _ = broadcaster.room(&query.room).pong(&ping).await;
                     },
                     Message::Pong(pong) => {
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.room(query.room.clone()).ping(pong).await;
+                        let _ = broadcaster.room(&query.room).ping(&pong).await;
                     },
                     Message::Binary(binary) => {
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.room(query.room.clone()).binary(binary).await;
+                        let _ = broadcaster.room(&query.room).binary(&binary).await;
                     }
                 }
             },

@@ -14,11 +14,11 @@ Add that to your `Cargo.toml` file:
 
 ```toml
 
-axum-ws-broadcaster = "0.5.1"
+axum-ws-broadcaster = "0.6.0"
 
 # Or:
 
-axum-ws-broadcaster = { version = "0.1.0", features = ["typed"] }
+axum-ws-broadcaster = { version = "0.6.0", features = ["typed"] }
 
 ```
 
@@ -67,7 +67,7 @@ Later you have to handle the connections and rooms in the websocket route:
 // third argument is the which we want to assign to connection
 // fourth argument the receiver of connection.
 
-let broadcaster = Broadcaster::handle(&broadcaster, room_id, conn_id, receiver).await;
+let broadcaster = Broadcaster::handle(&broadcaster, &room_id, &conn_id, receiver).await;
 
 ```
 
@@ -90,7 +90,7 @@ If you are familiar, normal api works almost identical to the websockets of [act
 Message::Text(input) => {
     let mut broadcaster = broadcaster.write().await;
 
-    let _ = broadcaster.room(query.room.clone()).broadcast(input).await;
+    let _ = broadcaster.room(&query.room).broadcast(&input).await;
 }
 
 ```
@@ -114,7 +114,7 @@ Message::Item(input) => {
     let output = output;
 
     // than perform the broadcasting:
-    let _ = broadcaster.room(query.room.clone()).broadcast(output).await;
+    let _ = broadcaster.room(&query.room).broadcast(&output).await;
 },
 
 ```
@@ -133,7 +133,7 @@ async fn websocket_handler(ws: WebSocketUpgrade, Query(query): Query<WebsocketQu
 async fn handle_socket(socket: WebSocket, Query(query): Query<WebsocketQueries>, state: Arc<RwLock<Broadcaster>>) {
     let (receiver, mut stream) = Broadcaster::configure(socket);
 
-    let broadcaster = Broadcaster::handle(&state, query.room.clone(), query.id.clone(), receiver).await;
+    let broadcaster = Broadcaster::handle(&state, &query.room, &query.id, receiver).await;
 
     while let Some(msg_result) = stream.next().await {
         match msg_result {
@@ -142,42 +142,42 @@ async fn handle_socket(socket: WebSocket, Query(query): Query<WebsocketQueries>,
                     Message::Text(input) => {
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.room(query.room.clone()).broadcast(input).await;
+                        let _ = broadcaster.room(&query.room).broadcast(&input).await;
                     },
                     Message::Close(_) => {
                         // this is the old way of closing connections and making cleanup:
 
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.remove_connection(query.id).unwrap().close().await;
+                        let _ = broadcaster.remove_connection(&query.id).unwrap().close().await;
 
                         // the new way. This removes all the connections but keeps room open:
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.room(query.room).close(None).await;
+                        let _ = broadcaster.room(&query.room).close(None).await;
 
                         // this is the most proper way if you want to fully close a room:
 
                         let mut broadcaster = broadcaster.write().await;
                         
-                        let _ = broadcaster.remove_room(query.room).await;
+                        let _ = broadcaster.remove_room(&query.room).await;
 
                         return;
                     },
                     Message::Ping(ping) => {
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.room(query.room.clone()).pong(ping).await;
+                        let _ = broadcaster.room(&query.room).pong(&ping).await;
                     },
                     Message::Pong(pong) => {
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.room(query.room.clone()).ping(pong).await;
+                        let _ = broadcaster.room(&query.room).ping(&pong).await;
                     },
                     Message::Binary(binary) => {
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.room(query.room.clone()).binary(binary).await;
+                        let _ = broadcaster.room(&query.room).binary(&binary).await;
                     }
                 }
             },
@@ -201,7 +201,7 @@ async fn websocket_handler(ws: WebSocketUpgrade<String, WebsocketInput>, Query(q
 async fn handle_socket(socket: WebSocket<String, WebsocketInput>, Query(query): Query<WebsocketQueries>, state: Arc<RwLock<Broadcaster<String, WebsocketInput>>>) {
     let (receiver, mut stream) = Broadcaster::configure(socket);
 
-    let broadcaster = Broadcaster::handle(&state, query.room.clone(), query.id.clone(), receiver).await;
+    let broadcaster = Broadcaster::handle(&state, &query.room, &query.id, receiver).await;
 
     while let Some(msg_result) = stream.next().await {
         match msg_result {
@@ -221,36 +221,36 @@ async fn handle_socket(socket: WebSocket<String, WebsocketInput>, Query(query): 
 
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.room(query.room.clone()).broadcast(output).await;
+                        let _ = broadcaster.room(&query.room).broadcast(&output).await;
                     },
                     Message::Close(_) => {
                         // this is the old way of closing connections and making cleanup:
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.remove_connection(query.id).unwrap().close().await;
+                        let _ = broadcaster.remove_connection(&query.id).unwrap().close().await;
 
                         // the new way. This removes all the connections but keeps room open:
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.room(query.room).close(None).await;
+                        let _ = broadcaster.room(&query.room).close(None).await;
 
                         // this is the most proper way if you want to fully close a room:
 
                         let mut broadcaster = broadcaster.write().await;
                         
-                        let _ = broadcaster.remove_room(query.room).await;
+                        let _ = broadcaster.remove_room(&query.room).await;
                         
                         return;
                     },
                     Message::Ping(ping) => {
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.room(query.room.clone()).pong(ping).await;
+                        let _ = broadcaster.room(&query.room).pong(&ping).await;
                     },
                     Message::Pong(pong) => {
                         let mut broadcaster = broadcaster.write().await;
 
-                        let _ = broadcaster.room(query.room.clone()).ping(pong).await;
+                        let _ = broadcaster.room(&query.room).ping(&pong).await;
                     }
                 }
             },
