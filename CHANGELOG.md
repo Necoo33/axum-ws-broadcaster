@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.7.0
+
+- added `.close_conn()` method to `Room` struct of both implementations. It benefits them to close single connection with given id and not closes rooms.
+
 ## v0.6.0
 
 - typed and normal api's are changed, now they uses pointers of arguments most of the time rather than using actual arguments.

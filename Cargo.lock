@@ -163,7 +163,7 @@ dependencies = [
 
 [[package]]
 name = "axum-ws-broadcaster"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "axum 0.7.9",
  "axum 0.8.1",

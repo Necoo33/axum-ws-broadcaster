@@ -172,6 +172,24 @@ pub mod typed {
             } 
         }
 
+        /// it's most convenient way to close a single connection but keeping room open.
+        pub async fn close_conn(&mut self, close_frame: Option<CloseFrame<'static>>, id: &String) where T: Clone {
+            self.connections.retain_mut(|connection| {
+                if connection.id == *id {
+                    let msg = Message::Close(close_frame.clone());
+                    let receiver = &mut connection.receiver; 
+                                                    
+                    let _ = async {
+                        let _ = receiver.send(msg).await;
+                    };
+                    
+                    false
+                } else {
+                    true
+                }
+            });
+        }
+
         /// Close all connections and remove it from it's room but not close it.
         pub async fn close(&mut self, close_frame: Option<CloseFrame<'static>>) where T: Clone { 
             self.connections.retain_mut(|connection| {
@@ -536,6 +554,24 @@ pub mod normal {
                 };
                 
                 false
+            });
+        }
+
+        /// it's most convenient way to close a single connection but keeping room open.
+        pub async fn close_conn(&mut self, close_frame: Option<CloseFrame>, id: &String) {
+            self.connections.retain_mut(|connection| {
+                if connection.id == *id {
+                    let msg = Message::Close(close_frame.clone());
+                    let receiver = &mut connection.receiver; 
+                                                    
+                    let _ = async {
+                        let _ = receiver.send(msg).await;
+                    };
+                    
+                    false
+                } else {
+                    true
+                }
             });
         }
 

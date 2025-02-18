@@ -235,11 +235,17 @@ async fn handle_socket(socket: WebSocket<String, WebsocketInput>, Query(query): 
 
                         let _ = broadcaster.room(&query.room).close(None).await;*/
 
-                        // this is the most proper way if you want to fully close a room:
+                        // if you want to close a single connection without closing room, use that:
 
                         let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(&query.room).close_conn(None, &query.id).await;
+
+                        // this is the most proper way if you want to fully close a room:
+
+                        /*let mut broadcaster = broadcaster.write().await;
                         
-                        let _ = broadcaster.remove_room(&query.room).await;
+                        let _ = broadcaster.remove_room(&query.room).await;*/
                         
                         return;
                     },

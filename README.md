@@ -14,7 +14,7 @@ Add that to your `Cargo.toml` file:
 
 ```toml
 
-axum-ws-broadcaster = "0.6.0"
+axum-ws-broadcaster = "0.7.0"
 
 # Or:
 
@@ -156,6 +156,11 @@ async fn handle_socket(socket: WebSocket, Query(query): Query<WebsocketQueries>,
 
                         let _ = broadcaster.room(&query.room).close(None).await;
 
+                        // it's your go-to choice if you want to close a single connection without closing room:
+                        let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(&query.room).close_conn(None, &query.id).await;
+
                         // this is the most proper way if you want to fully close a room:
 
                         let mut broadcaster = broadcaster.write().await;
@@ -233,6 +238,11 @@ async fn handle_socket(socket: WebSocket<String, WebsocketInput>, Query(query): 
                         let mut broadcaster = broadcaster.write().await;
 
                         let _ = broadcaster.room(&query.room).close(None).await;
+
+                        // it's your go-to choice if you want to close a single connection without closing room:
+                        let mut broadcaster = broadcaster.write().await;
+
+                        let _ = broadcaster.room(&query.room).close_conn(None, &query.id).await;
 
                         // this is the most proper way if you want to fully close a room:
 
