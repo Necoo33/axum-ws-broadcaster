@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v0.8.0
+
+- added `.each_room_immut()`, `.each_room()` and `.each_room_mut()` methods to the `Broadcaster` type of both implementations.
+- upgraded `tokio`, `serde` and `serde_json` crates versions to their latests.
+
 ## v0.7.0
 
 - added `.close_conn()` method to `Room` struct of both implementations. It benefits them to close single connection with given id and not closes rooms.
