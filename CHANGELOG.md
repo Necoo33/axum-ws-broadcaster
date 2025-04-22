@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.9.0
+
+- added `.send()`, `.send_if()` and `.send_if_not()` methods to `Connection` type of both implementations.
+
 ## v0.8.0
 
 - added `.each_room_immut()`, `.each_room()` and `.each_room_mut()` methods to the `Broadcaster` type of both implementations.

@@ -35,6 +35,25 @@ pub mod typed {
                 receiver
             }
         }
+
+        // send the text message.
+        pub async fn send(&mut self, message: T) where T: Clone {
+            let _ = self.receiver.send(Message::Item(message)).await;
+        }
+
+                /// send the text message if the given condition in it's closure is true.
+        pub async fn send_if<F>(&mut self, message: T, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+            if condition(&self) { 
+                let _ = self.receiver.send(Message::Item(message)).await;
+            } 
+        }
+
+        /// sen the text message if the given condition in it's closure is true.
+        pub async fn send_if_not<F>(&mut self, message: T, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+            if !condition(&self) { 
+                let _ = self.receiver.send(Message::Item(message)).await;
+            } 
+        }
     }
 
     impl<T: Display + Serialize, S: Display + Serialize> Room<T, S> where SplitSink<WebSocket<T, S>, Message<T>>: Sink<Message<T>> + Unpin {
@@ -436,6 +455,28 @@ pub mod normal {
                 id, 
                 receiver
             }
+        }
+
+        // send the text message.
+        pub async fn send(&mut self, message: Utf8Bytes) -> Result<(), axum_8_1::Error> {
+            match self.receiver.send(Message::Text(message)).await {
+                Ok(_) => Ok(()),
+                Err(error) => Err(error)
+            }
+        }
+
+        /// send the text message if the given condition in it's closure is true.
+        pub async fn send_if<F>(&mut self, message: Utf8Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
+            if condition(&self) { 
+                let _ = self.receiver.send(Message::Text(message)).await;
+            } 
+        }
+
+        /// sen the text message if the given condition in it's closure is true.
+        pub async fn send_if_not<F>(&mut self, message: Utf8Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
+            if !condition(&self) { 
+                let _ = self.receiver.send(Message::Text(message)).await;
+            } 
         }
     }
 
