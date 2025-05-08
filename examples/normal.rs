@@ -1,6 +1,6 @@
 use axum_wsb::normal::Broadcaster;
 use std::{fmt::Display, sync::Arc};
-use axum_8_1::{Router, response::{Response, IntoResponse}, routing::get, extract::{State, Query, ws::{WebSocket, WebSocketUpgrade, Message}}};
+use axum_8_4::{Router, response::{Response, IntoResponse}, routing::get, extract::{State, Query, ws::{WebSocket, WebSocketUpgrade, Message}}};
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use futures_util::StreamExt;
@@ -17,7 +17,7 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:5000").await.unwrap();
     
-    axum_8_1::serve(listener, router).await.unwrap();
+    axum_8_4::serve(listener, router).await.unwrap();
 }
 
 pub async fn home_controller() -> Response<String> {

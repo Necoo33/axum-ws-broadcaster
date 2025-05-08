@@ -36,7 +36,7 @@ pub mod typed {
             }
         }
 
-        // send the text message.
+        /// send the text message.
         pub async fn send(&mut self, message: T) where T: Clone {
             let _ = self.receiver.send(Message::Item(message)).await;
         }
@@ -52,6 +52,25 @@ pub mod typed {
         pub async fn send_if_not<F>(&mut self, message: T, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
             if !condition(&self) { 
                 let _ = self.receiver.send(Message::Item(message)).await;
+            } 
+        }
+
+        // send the text message.
+        pub async fn ping(&mut self, message: &Vec<u8>) where T: Clone {
+            let _ = self.receiver.send(Message::Ping(message.clone())).await;
+        }
+
+                /// send the text message if the given condition in it's closure is true.
+        pub async fn ping_if<F>(&mut self, message: &Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+            if condition(&self) { 
+                let _ = self.receiver.send(Message::Ping(message.clone())).await;
+            } 
+        }
+
+        /// sen the text message if the given condition in it's closure is true.
+        pub async fn ping_if_not<F>(&mut self, message: &Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+            if !condition(&self) { 
+                let _ = self.receiver.send(Message::Ping(message.clone())).await;
             } 
         }
     }
@@ -423,7 +442,7 @@ pub mod typed {
 }
 
 pub mod normal {
-    use axum_8_1::{body::Bytes, extract::ws::{CloseFrame, Message, Utf8Bytes, WebSocket}};
+    use axum_8_4::{body::Bytes, extract::ws::{CloseFrame, Message, Utf8Bytes, WebSocket}};
     use std::sync::Arc;
     use tokio::sync::RwLock;
     use futures_util::{sink::SinkExt, stream::{SplitSink, SplitStream, StreamExt}};
@@ -458,7 +477,7 @@ pub mod normal {
         }
 
         // send the text message.
-        pub async fn send(&mut self, message: Utf8Bytes) -> Result<(), axum_8_1::Error> {
+        pub async fn send(&mut self, message: Utf8Bytes) -> Result<(), axum_8_4::Error> {
             match self.receiver.send(Message::Text(message)).await {
                 Ok(_) => Ok(()),
                 Err(error) => Err(error)
@@ -476,6 +495,28 @@ pub mod normal {
         pub async fn send_if_not<F>(&mut self, message: Utf8Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
             if !condition(&self) { 
                 let _ = self.receiver.send(Message::Text(message)).await;
+            } 
+        }
+
+        /// send the ping.
+        pub async fn ping(&mut self, message: Bytes) -> Result<(), axum_8_4::Error> {
+            match self.receiver.send(Message::Ping(message)).await {
+                Ok(_) => Ok(()),
+                Err(error) => Err(error)
+            }
+        }
+
+        /// send the ping if the given condition in it's closure is true.
+        pub async fn ping_if<F>(&mut self, message: Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
+            if condition(&self) { 
+                let _ = self.receiver.send(Message::Ping(message)).await;
+            } 
+        }
+
+        /// sen the ping if the given condition in it's closure is true.
+        pub async fn ping_if_not<F>(&mut self, message: Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
+            if !condition(&self) { 
+                let _ = self.receiver.send(Message::Ping(message)).await;
             } 
         }
     }

@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v0.10.0
+
+- added `.ping()`, `.ping_if()` and `.ping_if_not()` methods to `Connection` type of both implementations.
+- axum version updated to `v0.8.4`
+
 ## v0.9.0
 
 - added `.send()`, `.send_if()` and `.send_if_not()` methods to `Connection` type of both implementations.
