@@ -55,12 +55,12 @@ pub mod typed {
             } 
         }
 
-        // send the text message.
+        /// send the text message.
         pub async fn ping(&mut self, message: &Vec<u8>) where T: Clone {
             let _ = self.receiver.send(Message::Ping(message.clone())).await;
         }
 
-                /// send the text message if the given condition in it's closure is true.
+        /// send the text message if the given condition in it's closure is true.
         pub async fn ping_if<F>(&mut self, message: &Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
             if condition(&self) { 
                 let _ = self.receiver.send(Message::Ping(message.clone())).await;
@@ -71,6 +71,25 @@ pub mod typed {
         pub async fn ping_if_not<F>(&mut self, message: &Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
             if !condition(&self) { 
                 let _ = self.receiver.send(Message::Ping(message.clone())).await;
+            } 
+        }
+
+        /// send the text message.
+        pub async fn pong(&mut self, message: &Vec<u8>) where T: Clone {
+            let _ = self.receiver.send(Message::Pong(message.clone())).await;
+        }
+
+                /// send the text message if the given condition in it's closure is true.
+        pub async fn pong_if<F>(&mut self, message: &Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+            if condition(&self) { 
+                let _ = self.receiver.send(Message::Pong(message.clone())).await;
+            } 
+        }
+
+        /// sen the text message if the given condition in it's closure is true.
+        pub async fn pong_if_not<F>(&mut self, message: &Vec<u8>, condition: F) where F: Fn(&Connection<T, S>) -> bool, T: Clone { 
+            if !condition(&self) { 
+                let _ = self.receiver.send(Message::Pong(message.clone())).await;
             } 
         }
     }
@@ -517,6 +536,28 @@ pub mod normal {
         pub async fn ping_if_not<F>(&mut self, message: Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
             if !condition(&self) { 
                 let _ = self.receiver.send(Message::Ping(message)).await;
+            } 
+        }
+
+        /// send the pong.
+        pub async fn pong(&mut self, message: Bytes) -> Result<(), axum_8_4::Error> {
+            match self.receiver.send(Message::Pong(message)).await {
+                Ok(_) => Ok(()),
+                Err(error) => Err(error)
+            }
+        }
+
+        /// send the pong if the given condition in it's closure is true.
+        pub async fn pong_if<F>(&mut self, message: Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
+            if condition(&self) { 
+                let _ = self.receiver.send(Message::Pong(message)).await;
+            } 
+        }
+
+        /// sen the pong if the given condition in it's closure is true.
+        pub async fn pong_if_not<F>(&mut self, message: Bytes, condition: F) where F: Fn(&Connection) -> bool, { 
+            if !condition(&self) { 
+                let _ = self.receiver.send(Message::Pong(message)).await;
             } 
         }
     }

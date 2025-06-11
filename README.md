@@ -14,11 +14,11 @@ Add that to your `Cargo.toml` file:
 
 ```toml
 
-axum-ws-broadcaster = "0.10.0"
+axum-ws-broadcaster = "0.11.0"
 
 # Or:
 
-axum-ws-broadcaster = { version = "0.10.0", features = ["typed"] }
+axum-ws-broadcaster = { version = "0.11.0", features = ["typed"] }
 
 ```
 

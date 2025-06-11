@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.11.0
+
+- added `.pong()`, `.pong_if()` and `.pong_if_not()` methods to `Connection` type of both implementations.
+
 ## v0.10.0
 
 - added `.ping()`, `.ping_if()` and `.ping_if_not()` methods to `Connection` type of both implementations.
